@@ -38,13 +38,8 @@ export {
 const keyboardTypeRegistry = {};
 
 export function register(type, factory) {
-  console.log('register')
+  console.log('register', type, factory)
   keyboardTypeRegistry[type] = factory;
-}
-
-const RenderKeyboard = ({Comp, tag}) => {
-  console.log('RenderKeyboard')
-  return Comp({tag})
 }
 
 class CustomKeyboardKitContainer extends Component {
@@ -56,8 +51,8 @@ class CustomKeyboardKitContainer extends Component {
       console.warn(`Custom keyboard type ${type} not registered.`);
       return null;
     }
-    const Comp = factory;
-    return <RenderKeyboard Comp={Comp}tag={tag} />;
+    const Comp = factory();
+    return <Comp tag={tag} />;
   }
 }
 
