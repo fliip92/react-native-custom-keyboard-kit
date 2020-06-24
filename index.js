@@ -1,122 +1,120 @@
-#import <React/RCTRootView.h>
-#import "RNCustomKeyboardKit.h"
-#import "RCTBridge+Private.h"
-#import "RCTUIManager.h"
-#import <React/RCTSinglelineTextInputView.h>
+import React, { Component } from 'react';
 
-@implementation RNCustomKeyboardKit
+import PropTypes from 'prop-types';
 
-@synthesize bridge = _bridge;
+import {
+  NativeModules,
+  TextInput,
+  findNodeHandle,
+  AppRegistry,
+  View,
+  Text,
+  Platform
+} from 'react-native';
 
-- (dispatch_queue_t)methodQueue
-{
-	return dispatch_get_main_queue();
+const { CustomKeyboardKit} = NativeModules;
+
+const {
+  install, uninstall,
+  insertText, backSpace, doDelete,
+  moveLeft, moveRight,
+  switchSystemKeyboard,
+  hideKeyboard,
+  setText,
+  getText,
+  hideStandardKeyboard
+} = CustomKeyboardKit;
+
+export {
+  install, uninstall,
+  insertText, backSpace, doDelete,
+  moveLeft, moveRight,
+  switchSystemKeyboard,
+  hideKeyboard,
+  setText,
+  getText
+};
+
+const keyboardTypeRegistry = {};
+
+export function register(type, factory) {
+  console.log('register', type, factory)
+  keyboardTypeRegistry[type] = factory;
 }
 
-RCT_EXPORT_MODULE(CustomKeyboardKit)
-
-RCT_EXPORT_METHOD(install:(nonnull NSNumber *)reactTag)
-{
-  UIView* inputView = [[RCTRootView alloc] initWithBridge:_bridge
-                                            moduleName:@"CustomKeyboardKit"
-                                    initialProperties:@{ @"tag": reactTag}];
-                                    	
-  RCTSinglelineTextInputView *view = (RCTSinglelineTextInputView*)[_bridge.uiManager viewForReactTag:reactTag];
-  [view.backedTextInputView setInputAccessoryView:inputView];
-  [view reloadInputViews];
-}
-
-RCT_EXPORT_METHOD(uninstall:(nonnull NSNumber *)reactTag)
-{
-  RCTSinglelineTextInputView *view = [_bridge.uiManager viewForReactTag:reactTag];
-  UITextField *textView = view.backedTextInputView;
-  textView.inputView = nil;
-  textView.inputAccessoryView = nil;
-  [textView reloadInputViews];
-}
-
-RCT_EXPORT_METHOD(insertText:(nonnull NSNumber *)reactTag withText:(NSString*)text) {
-  RCTSinglelineTextInputView *view = (RCTSinglelineTextInputView*)[_bridge.uiManager viewForReactTag:reactTag];
-  UITextField *textView = view.backedTextInputView;
-
-  [textView replaceRange:textView.selectedTextRange withText:text];
-}
-
-RCT_EXPORT_METHOD(setText:(nonnull NSNumber *)reactTag withText:(NSString*)text) {
-  RCTSinglelineTextInputView *view = (RCTSinglelineTextInputView*)[_bridge.uiManager viewForReactTag:reactTag];
-  UITextField *textView = view.backedTextInputView;
-  [textView setText:text];
-  UITextRange* range = textView.selectedTextRange;
-  [textView replaceRange:range withText:@""];
-}
-
-RCT_EXPORT_METHOD(getText:(nonnull NSNumber *)reactTag  resolver:(RCTPromiseResolveBlock)resolve
-                rejecter:(RCTPromiseRejectBlock)reject) {
-  RCTSinglelineTextInputView *view = (RCTSinglelineTextInputView*)[_bridge.uiManager viewForReactTag:reactTag];
-  UITextField *textView = view.backedTextInputView;
-  resolve(textView.text);
-}
-
-RCT_EXPORT_METHOD(hideStandardKeyboard:(nonnull NSNumber *)reactTag) {
-  RCTSinglelineTextInputView *view = (RCTSinglelineTextInputView*)[_bridge.uiManager viewForReactTag:reactTag];
-  UITextField *textView = view.backedTextInputView;
-  textView.inputView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, 0, 0)];
-  [textView reloadInputViews];
-}
-
-RCT_EXPORT_METHOD(backSpace:(nonnull NSNumber *)reactTag) {
-  RCTSinglelineTextInputView *view = (RCTSinglelineTextInputView*)[_bridge.uiManager viewForReactTag:reactTag];
-  UITextField *textView = view.backedTextInputView;
-    
-  UITextRange* range = textView.selectedTextRange;
-  if ([textView comparePosition:range.start toPosition:range.end] == 0) {
-    range = [textView textRangeFromPosition:[textView positionFromPosition:range.start offset:-1] toPosition:range.start];
+class CustomKeyboardKitContainer extends Component {
+  render() {
+    console.log('CustomKeyboardKitContainer')
+    const {tag, type} = this.props;
+    const factory = keyboardTypeRegistry[type];
+    if (!factory) {
+      console.warn(`Custom keyboard type ${type} not registered.`);
+      return null;
+    }
+    const Comp = factory();
+    return <Comp tag={tag} />;
   }
-  [textView replaceRange:range withText:@""];
 }
 
-RCT_EXPORT_METHOD(doDelete:(nonnull NSNumber *)reactTag) {
-  UITextView *view = (UITextView*)[_bridge.uiManager viewForReactTag:reactTag];
+AppRegistry.registerComponent("CustomKeyboardKit", () => CustomKeyboardKitContainer);
 
-  UITextRange* range = view.selectedTextRange;
-  if ([view comparePosition:range.start toPosition:range.end] == 0) {
-    range = [view textRangeFromPosition:range.start toPosition:[view positionFromPosition: range.start offset: 1]];
-  }
-  [view replaceRange:range withText:@""];
-}
-
-RCT_EXPORT_METHOD(moveLeft:(nonnull NSNumber *)reactTag) {
-  UITextView *view = (UITextView*)[_bridge.uiManager viewForReactTag:reactTag];
-
-  UITextRange* range = view.selectedTextRange;
-  UITextPosition* position = range.start;
-
-  if ([view comparePosition:range.start toPosition:range.end] == 0) {
-      position = [view positionFromPosition:position offset:-1];
+export class CustomTextInput extends Component {
+  static propTypes = {
+    ...TextInput.propTypes,
+    customKeyboardType: PropTypes.string,
   }
 
-  view.selectedTextRange = [view textRangeFromPosition: position toPosition:position];
-}
-
-RCT_EXPORT_METHOD(moveRight:(nonnull NSNumber *)reactTag) {
-  UITextView *view = (UITextView*)[_bridge.uiManager viewForReactTag:reactTag];
-
-  UITextRange* range = view.selectedTextRange;
-  UITextPosition* position = range.end;
-
-  if ([view comparePosition:range.start toPosition:range.end] == 0) {
-    position = [view positionFromPosition: position offset: 1];
+  componentDidMount() {
+    if (Platform.OS === 'ios') {
+      setTimeout(() => {
+        const nativeHandle = findNodeHandle(this.input)
+        if (nativeHandle) {
+          install(nativeHandle, 'empty');
+        }
+      }, 100)
+    }
   }
 
-  view.selectedTextRange = [view textRangeFromPosition: position toPosition:position];
-}
+  componentWillUnmount() {
+    if (Platform.OS === 'ios') {
+      uninstall(findNodeHandle(this.input))
+    }
+  }
 
-RCT_EXPORT_METHOD(switchSystemKeyboard:(nonnull NSNumber*) reactTag) {
-  UITextView *view = [_bridge.uiManager viewForReactTag:reactTag];
-  UIView* inputView = view.inputView;
-  view.inputView = nil;
-  [view reloadInputViews];
-  view.inputView = inputView;
-}
+  // componentWillReceiveProps(newProps) {
+  //   if (newProps.customKeyboardType !== this.props.customKeyboardType) {
+  //     install(findNodeHandle(this.input), newProps.customKeyboardType);
+  //   }
+  // }
 
-@end
+  onRef = ref => {
+    this.input = ref;
+  }
+
+  focus = () => {
+    if (this.input.__isMounted && !this.input.isFocused()) {
+      this.input.focus()
+    }
+  }
+
+  blur = () => {
+    if (this.input.__isMounted && this.input.isFocused()) {
+      this.input.blur()
+    }
+  }
+
+  hideStandardKeyboard = () => {
+    hideStandardKeyboard(findNodeHandle(this.input))
+  }
+
+  getTag = () => {
+    return findNodeHandle(this.input)
+  }
+
+  render() {
+    const { customKeyboardType, ...others } = this.props;
+    return (
+      <TextInput {...others} ref={this.onRef} />
+    );
+  }
+}
