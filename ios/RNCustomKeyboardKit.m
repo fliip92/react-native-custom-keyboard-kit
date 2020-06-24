@@ -16,7 +16,7 @@
 
 RCT_EXPORT_MODULE(CustomKeyboardKit)
 
-RCT_EXPORT_METHOD(install:(nonnull NSNumber *)reactTag withType:(nonnull NSString *)keyboardType)
+RCT_EXPORT_METHOD(install:(nonnull NSNumber *)reactTag)
 {
   [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:@{@"reactTag": reactTag}];
   UIView* inputView = [[RCTRootView alloc] initWithBridge:_bridge
