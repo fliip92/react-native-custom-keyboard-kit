@@ -16,16 +16,15 @@
 
 RCT_EXPORT_MODULE(CustomKeyboardKit)
 
-RCT_EXPORT_METHOD(install:(nonnull NSNumber *)reactTag withType:(nonnull NSString *)keyboardType)
+RCT_EXPORT_METHOD(install:(nonnull NSNumber *)reactTag withHeight:(double)height)
 {
   [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:@{@"reactTag": reactTag}];
   UIView* inputView = [[RCTRootView alloc] initWithBridge:_bridge
                                             moduleName:@"CustomKeyboardKit"
                                     initialProperties:@{@"tag": reactTag}];
-
   RCTMultilineTextInputView *view = (RCTMultilineTextInputView*)[_bridge.uiManager viewForReactTag:reactTag];
   RCTUITextView *textView = (RCTUITextView *)view.backedTextInputView;
-  inputView.frame = CGRectMake(0, 0, 320, 320);
+  inputView.frame = CGRectMake(0, 0, 320, height);
   [textView setInputView:inputView];
 }
 
