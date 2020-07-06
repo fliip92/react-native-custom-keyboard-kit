@@ -72,7 +72,7 @@ public class RNCustomKeyboardKitModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void install(final int tag, final String type) {
+  public void install(final int tag, final int height) {
     UiThreadUtil.runOnUiThread(new Runnable() {
         @Override
         public void run() {
@@ -83,7 +83,7 @@ public class RNCustomKeyboardKitModule extends ReactContextBaseJavaModule {
             return;
           }
 
-          edit.setTag(TAG_ID, createCustomKeyboardKit(activity, tag, type));
+          edit.setTag(TAG_ID, createCustomKeyboardKit(activity, tag, height));
           
           final View.OnFocusChangeListener prevListener = edit.getOnFocusChangeListener();
 
@@ -135,21 +135,21 @@ public class RNCustomKeyboardKitModule extends ReactContextBaseJavaModule {
 
   ReactRootView rootView = null;
 
-  private View createCustomKeyboardKit(Activity activity, int tag, String type) {
+  private View createCustomKeyboardKit(Activity activity, int tag, int height) {
     RelativeLayout layout = new RelativeLayout(activity);
     rootView = new ReactRootView(this.getReactApplicationContext());
     rootView.setBackgroundColor(Color.WHITE);
 
     Bundle bundle = new Bundle();
     bundle.putInt("tag", tag);
-    bundle.putString("type", type);
+    // bundle.putString("type", type);
     rootView.startReactApplication(
             ((ReactApplication) activity.getApplication()).getReactNativeHost().getReactInstanceManager(),
             "CustomKeyboardKit",
             bundle);
 
     final float scale = activity.getResources().getDisplayMetrics().density;
-    RelativeLayout.LayoutParams lParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.round(325*scale));
+    RelativeLayout.LayoutParams lParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.round(height*scale));
     lParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
     layout.addView(rootView, lParams);
     // activity.addContentView(layout, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
