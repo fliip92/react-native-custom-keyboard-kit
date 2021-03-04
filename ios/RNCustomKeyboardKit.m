@@ -22,9 +22,11 @@ RCT_EXPORT_METHOD(install:(nonnull NSNumber *)reactTag withHeight:(double)height
   UIView* inputView = [[RCTRootView alloc] initWithBridge:_bridge
                                             moduleName:@"CustomKeyboardKit"
                                     initialProperties:@{@"tag": reactTag}];
+
   RCTMultilineTextInputView *view = (RCTMultilineTextInputView*)[_bridge.uiManager viewForReactTag:reactTag];
   RCTUITextView *textView = (RCTUITextView *)view.backedTextInputView;
-  inputView.frame = CGRectMake(0, 0, 320, height);
+  inputView.frame = CGRectMake(0, 0, height, height);
+  inputView.backgroundColor = [UIColor blackColor];
   [textView setInputView:inputView];
 }
 
