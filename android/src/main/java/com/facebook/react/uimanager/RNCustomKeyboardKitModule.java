@@ -52,19 +52,22 @@ public class RNCustomKeyboardKitModule extends ReactContextBaseJavaModule {
   }
 
   private ReactEditText getEditById(int id) {
-    // UIViewOperationQueue uii = this.getReactApplicationContext().getNativeModule(UIManagerModule.class).getUIImplementation().getUIViewOperationQueue();
+    // UIViewOperationQueue uii =
+    // this.getReactApplicationContext().getNativeModule(UIManagerModule.class).getUIImplementation().getUIViewOperationQueue();
     // return (ReactEditText) uii.getNativeViewHierarchyManager().resolveView(id);
 
     UIViewOperationQueue uii = null;
     ReactEditText edit = null;
 
     while (edit == null) {
-      uii = this.getReactApplicationContext().getNativeModule(UIManagerModule.class).getUIImplementation().getUIViewOperationQueue();
+      uii = this.getReactApplicationContext().getNativeModule(UIManagerModule.class).getUIImplementation()
+          .getUIViewOperationQueue();
 
       try {
         edit = (ReactEditText) uii.getNativeViewHierarchyManager().resolveView(id);
       } catch (IllegalViewOperationException e) {
         Log.e("CustomKeyboard", e.toString());
+        break;
       }
     }
 
@@ -74,87 +77,91 @@ public class RNCustomKeyboardKitModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void install(final int tag, final int height) {
     UiThreadUtil.runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-          final Activity activity = getCurrentActivity();
-          final ReactEditText edit = getEditById(tag);
+      @Override
+      public void run() {
+        final Activity activity = getCurrentActivity();
+        final ReactEditText edit = getEditById(tag);
 
-          if (edit == null) {
-            return;
-          }
+        if (edit == null) {
+          return;
+        }
 
-          edit.setTag(TAG_ID, createCustomKeyboardKit(activity, tag, height));
-          
-          final View.OnFocusChangeListener prevListener = edit.getOnFocusChangeListener();
+        edit.setTag(TAG_ID, createCustomKeyboardKit(activity, tag, height));
 
-          edit.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(final View v, boolean hasFocus) {
-              // Keep the original onFocus prop of TextInput
-              if (prevListener != null) {
-                prevListener.onFocusChange(v, hasFocus);
-              }
-              if (hasFocus) {
-                View keyboard = (View)edit.getTag(TAG_ID);
-                if (keyboard.getParent() == null) {
-                   activity.addContentView(keyboard, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                }
-                UiThreadUtil.runOnUiThread(new Runnable() {
-                  @Override
-                  public void run() {
-                    ((InputMethodManager) getReactApplicationContext().getSystemService(Activity.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(v.getWindowToken(), 0);
-                  }
-                });
-              } else {
-                View keyboard = (View)edit.getTag(TAG_ID);
-                if (keyboard.getParent() != null) {
-                  ((ViewGroup) keyboard.getParent()).removeView(keyboard);
-                }
-              }
+        final View.OnFocusChangeListener prevListener = edit.getOnFocusChangeListener();
+
+        edit.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+          @Override
+          public void onFocusChange(final View v, boolean hasFocus) {
+            // Keep the original onFocus prop of TextInput
+            if (prevListener != null) {
+              prevListener.onFocusChange(v, hasFocus);
             }
-          });
-
-          edit.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(final View v) {
-              View keyboard = (View)edit.getTag(TAG_ID);
+            if (hasFocus) {
+              View keyboard = (View) edit.getTag(TAG_ID);
               if (keyboard.getParent() == null) {
-                activity.addContentView(keyboard, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                activity.addContentView(keyboard, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
               }
               UiThreadUtil.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                  ((InputMethodManager) getReactApplicationContext().getSystemService(Activity.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(v.getWindowToken(), 0);
+                  ((InputMethodManager) getReactApplicationContext().getSystemService(Activity.INPUT_METHOD_SERVICE))
+                      .hideSoftInputFromWindow(v.getWindowToken(), 0);
                 }
               });
+            } else {
+              View keyboard = (View) edit.getTag(TAG_ID);
+              if (keyboard.getParent() != null) {
+                ((ViewGroup) keyboard.getParent()).removeView(keyboard);
+              }
             }
-          });
-        }
+          }
+        });
+
+        edit.setOnClickListener(new View.OnClickListener() {
+          @Override
+          public void onClick(final View v) {
+            View keyboard = (View) edit.getTag(TAG_ID);
+            if (keyboard.getParent() == null) {
+              activity.addContentView(keyboard,
+                  new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            }
+            UiThreadUtil.runOnUiThread(new Runnable() {
+              @Override
+              public void run() {
+                ((InputMethodManager) getReactApplicationContext().getSystemService(Activity.INPUT_METHOD_SERVICE))
+                    .hideSoftInputFromWindow(v.getWindowToken(), 0);
+              }
+            });
+          }
+        });
+      }
     });
   }
 
   ReactRootView rootView = null;
 
   private View createCustomKeyboardKit(Activity activity, int tag, int height) {
+    Log.e("createCustomKeyboardKit------------->>>>>", activity.getResources().getDisplayMetrics().toString());
     RelativeLayout layout = new RelativeLayout(activity);
     rootView = new ReactRootView(this.getReactApplicationContext());
-    rootView.setBackgroundColor(Color.WHITE);
+    rootView.setBackgroundColor(Color.BLACK);
 
     Bundle bundle = new Bundle();
     bundle.putInt("tag", tag);
-    // bundle.putString("type", type);
     rootView.startReactApplication(
-            ((ReactApplication) activity.getApplication()).getReactNativeHost().getReactInstanceManager(),
-            "CustomKeyboardKit",
-            bundle);
+        ((ReactApplication) activity.getApplication()).getReactNativeHost().getReactInstanceManager(),
+        "CustomKeyboardKit", bundle);
 
     final float scale = activity.getResources().getDisplayMetrics().density;
-    RelativeLayout.LayoutParams lParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.round(height*scale));
+    final float screenHeight = activity.getResources().getDisplayMetrics().heightPixels;
+    RelativeLayout.LayoutParams lParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, Math.round(height * scale));
     lParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
     layout.addView(rootView, lParams);
-    // activity.addContentView(layout, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-    final ReactEditText edit = getEditById(tag);
-    ((InputMethodManager) getReactApplicationContext().getSystemService(Activity.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(edit.getWindowToken(), 0);
+    // activity.addContentView(layout, new
+    // ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
+    // ViewGroup.LayoutParams.FILL_PARENT));
     return layout;
   }
 
@@ -187,8 +194,7 @@ public class RNCustomKeyboardKitModule extends ReactContextBaseJavaModule {
 
         int start = Math.max(edit.getSelectionStart(), 0);
         int end = Math.max(edit.getSelectionEnd(), 0);
-        edit.getText().replace(Math.min(start, end), Math.max(start, end),
-                text, 0, text.length());
+        edit.getText().replace(Math.min(start, end), Math.max(start, end), text, 0, text.length());
 
       }
     });
@@ -244,7 +250,7 @@ public class RNCustomKeyboardKitModule extends ReactContextBaseJavaModule {
         int end = Math.max(edit.getSelectionEnd(), 0);
         if (start != end) {
           edit.getText().delete(start, end);
-        } else if (start > 0){
+        } else if (start > 0) {
           edit.getText().delete(start - 1, end);
         }
       }
@@ -266,8 +272,8 @@ public class RNCustomKeyboardKitModule extends ReactContextBaseJavaModule {
         int end = Math.max(edit.getSelectionEnd(), 0);
         if (start != end) {
           edit.getText().delete(start, end);
-        } else if (start > 0){
-          edit.getText().delete(start, end+1);
+        } else if (start > 0) {
+          edit.getText().delete(start, end + 1);
         }
       }
     });
@@ -310,7 +316,7 @@ public class RNCustomKeyboardKitModule extends ReactContextBaseJavaModule {
         int end = Math.max(edit.getSelectionEnd(), 0);
         if (start != end) {
           edit.setSelection(end, end);
-        } else if (start > 0){
+        } else if (start > 0) {
           edit.setSelection(end + 1, end + 1);
         }
       }
@@ -328,14 +334,15 @@ public class RNCustomKeyboardKitModule extends ReactContextBaseJavaModule {
           return;
         }
 
-        View keyboard = (View)edit.getTag(TAG_ID);
+        View keyboard = (View) edit.getTag(TAG_ID);
         if (keyboard.getParent() != null) {
           ((ViewGroup) keyboard.getParent()).removeView(keyboard);
         }
         UiThreadUtil.runOnUiThread(new Runnable() {
           @Override
           public void run() {
-            ((InputMethodManager) getReactApplicationContext().getSystemService(Activity.INPUT_METHOD_SERVICE)).showSoftInput(edit, InputMethodManager.SHOW_IMPLICIT);
+            ((InputMethodManager) getReactApplicationContext().getSystemService(Activity.INPUT_METHOD_SERVICE))
+                .showSoftInput(edit, InputMethodManager.SHOW_IMPLICIT);
           }
         });
       }
@@ -351,8 +358,8 @@ public class RNCustomKeyboardKitModule extends ReactContextBaseJavaModule {
         if (edit == null) {
           return;
         }
-        
-        View keyboard = (View)edit.getTag(TAG_ID);
+
+        View keyboard = (View) edit.getTag(TAG_ID);
         if (keyboard.getParent() != null) {
           ((ViewGroup) keyboard.getParent()).removeView(keyboard);
         }
@@ -361,8 +368,9 @@ public class RNCustomKeyboardKitModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public  void hideStandardKeyboard(final int tag) {
+  public void hideStandardKeyboard(final int tag) {
     final ReactEditText edit = getEditById(tag);
-    ((InputMethodManager) getReactApplicationContext().getSystemService(Activity.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(edit.getWindowToken(), 0);
+    ((InputMethodManager) getReactApplicationContext().getSystemService(Activity.INPUT_METHOD_SERVICE))
+        .hideSoftInputFromWindow(edit.getWindowToken(), 0);
   }
 }
